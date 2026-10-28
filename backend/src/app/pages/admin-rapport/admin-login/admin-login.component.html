@@ -1,0 +1,56 @@
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6 col-lg-5">
+    <nb-card class="shadow-lg">
+      <nb-card-header class="text-center bg-primary text-white">
+        <h4><i class="ion-locked mr-2"></i> Authentification Admin Rapport</h4>
+        <small class="text-light">Accès réservé à l'administrateur avec droits étendus</small>
+      </nb-card-header>
+      <nb-card-body>
+        <div *ngIf="errorMessage" class="alert alert-danger mb-3" role="alert">
+          {{ errorMessage }}
+        </div>
+
+        <form (ngSubmit)="seConnecter()">
+          <div class="form-group">
+            <label class="label">Adresse e-mail du Super Admin *</label>
+            <input
+              type="text"
+              nbInput
+              fullWidth
+              required
+              placeholder="admin@meci.com"
+              [(ngModel)]="nomUtilisateur"
+              name="nomUtilisateur"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="label">Mot de passe *</label>
+            <input
+              type="password"
+              nbInput
+              fullWidth
+              required
+              placeholder="Saisissez votre mot de passe"
+              [(ngModel)]="motDePasse"
+              name="motDePasse"
+            />
+          </div>
+
+          <button
+            type="submit"
+            nbButton
+            status="primary"
+            fullWidth
+            size="medium"
+            class="mt-3"
+            [disabled]="loading"
+          >
+            <span *ngIf="!loading"><i class="ion-log-in mr-1"></i> Se connecter à l'Espace Admin</span>
+            <span *ngIf="loading">Verification en cours...</span>
+          </button>
+        </form>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>

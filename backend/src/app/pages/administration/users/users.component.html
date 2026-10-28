@@ -1,0 +1,567 @@
+<div class="administration-page">
+
+  <!-- HEADER -->
+
+  <div class="page-header">
+
+    <div>
+
+      <div class="breadcrumb">
+        Administration
+        <span>/</span>
+        Utilisateurs
+      </div>
+
+      <h1>Gestion des utilisateurs</h1>
+
+      <p>
+        Gérez les utilisateurs qui pourront recevoir et traiter
+        les courriers de MECI.
+      </p>
+
+    </div>
+
+    <button
+      *ngIf="peutGererDroits && !formulaireVisible"
+      type="button"
+      class="btn-add-user"
+      (click)="ouvrirFormulaireAjout()">
+      <nb-icon icon="person-add-outline"></nb-icon>
+      Ajouter un utilisateur
+    </button>
+
+  </div>
+
+
+  <!-- MESSAGES -->
+
+  <div
+    class="alert alert-success"
+    *ngIf="messageSucces">
+
+    <nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+
+    {{ messageSucces }}
+
+  </div>
+
+
+  <div
+    class="alert alert-error"
+    *ngIf="messageErreur">
+
+    <nb-icon icon="alert-circle-outline"></nb-icon>
+
+    {{ messageErreur }}
+
+  </div>
+
+
+  <!-- CONTENU -->
+  <div class="administration-grid">
+
+    <!-- FORMULAIRE -->
+
+    <section class="form-card" *ngIf="peutGererDroits && formulaireVisible">
+
+      <div class="card-header">
+
+        <div class="card-icon">
+
+          <nb-icon icon="person-add-outline"></nb-icon>
+
+        </div>
+
+        <div>
+
+          <h2>
+            {{ modeEdition
+              ? 'Modifier un utilisateur et ses accès'
+              : 'Nouvel utilisateur'
+            }}
+          </h2>
+
+          <p>
+            {{
+              modeEdition
+                ? 'Modifiez les informations de l’utilisateur.'
+                : 'Ajoutez un utilisateur au système.'
+            }}
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <form
+      [formGroup]="utilisateurForm"
+      (ngSubmit)="enregistrerUtilisateur()">
+
+      <div class="user-form-layout">
+        <div class="user-details">
+
+          <!-- NOM -->
+
+          <div class="form-group">
+
+            <label>
+              Nom
+              <span>*</span>
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="person-outline"></nb-icon>
+
+              <input
+                type="text"
+                formControlName="nom"
+                placeholder="Nom">
+
+            </div>
+
+            <small
+              class="error"
+              *ngIf="
+                utilisateurForm.get('nom')?.touched &&
+                utilisateurForm.get('nom')?.invalid
+              ">
+
+              Le nom est obligatoire.
+
+            </small>
+
+          </div>
+
+
+          <!-- PRENOM -->
+
+          <div class="form-group">
+
+            <label>
+              Prénom
+              <span>*</span>
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="person-outline"></nb-icon>
+
+              <input
+                type="text"
+                formControlName="prenom"
+                placeholder="Prénom">
+
+            </div>
+
+            <small
+              class="error"
+              *ngIf="
+                utilisateurForm.get('prenom')?.touched &&
+                utilisateurForm.get('prenom')?.invalid
+              ">
+
+              Le prénom est obligatoire.
+
+            </small>
+
+          </div>
+
+
+          <!-- EMAIL -->
+
+          <div class="form-group">
+
+            <label>
+              Email
+              <span>*</span>
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="email-outline"></nb-icon>
+
+              <input
+                type="email"
+                formControlName="email"
+                placeholder="email@meci.tg">
+
+            </div>
+
+          </div>
+
+
+          <!-- TELEPHONE -->
+
+          <div class="form-group">
+
+            <label>
+              Téléphone
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="phone-outline"></nb-icon>
+
+              <input
+                type="text"
+                formControlName="telephone"
+                placeholder="90 00 00 00">
+
+            </div>
+
+          </div>
+
+
+          <!-- FONCTION -->
+
+          <div class="form-group">
+
+            <label>
+              Fonction
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="briefcase-outline"></nb-icon>
+
+              <input
+                type="text"
+                formControlName="fonction"
+                placeholder="Ex : Responsable Crédit">
+
+            </div>
+
+          </div>
+
+
+          <!-- SERVICE -->
+
+          <div class="form-group">
+
+            <label>
+              Service
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="people-outline"></nb-icon>
+
+              <input
+                type="text"
+                formControlName="service"
+                placeholder="Ex : Service Crédit">
+
+            </div>
+
+          </div>
+
+          <!-- MOT DE PASSE -->
+          <div class="form-group">
+            <label>
+              Mot de passe
+              <span>*</span>
+            </label>
+            <div class="input-wrapper">
+              <nb-icon icon="lock-outline"></nb-icon>
+              <input
+                type="password"
+                formControlName="motDePasse"
+                placeholder="Ex : MotDePasse123">
+            </div>
+            <small class="error"
+              *ngIf="utilisateurForm.get('motDePasse')?.touched && utilisateurForm.get('motDePasse')?.invalid">
+              Le mot de passe est obligatoire.
+            </small>
+          </div>
+
+
+          <!-- ACTIF -->
+
+          <div class="active-option">
+
+            <label class="switch">
+
+              <input
+                type="checkbox"
+                formControlName="actif">
+
+              <span class="slider"></span>
+
+            </label>
+
+            <div>
+
+              <strong>Utilisateur actif</strong>
+
+              <p>
+                Cet utilisateur pourra recevoir des courriers.
+              </p>
+
+            </div>
+
+          </div>
+        </div>
+
+        <section class="rights-section" aria-labelledby="rights-title">
+          <h3 id="rights-title">Menus et droits d’accès</h3>
+          <p class="rights-description">
+            Cochez un menu pour sélectionner ses pages et actions. Vous pouvez ensuite retirer des actions précises tout en conservant l’accès à la page.
+          </p>
+          <div *ngIf="chargementDroits" class="loading">
+            Chargement de l’arborescence des droits...
+          </div>
+          <ng-container *ngIf="!chargementDroits">
+            <ng-container
+              *ngTemplateOutlet="accessNodes; context: { $implicit: droitsApplication }">
+            </ng-container>
+          </ng-container>
+        </section>
+      </div>
+
+        <ng-template #accessNodes let-nodes>
+          <ul class="rights-tree">
+            <li *ngFor="let node of nodes">
+              <div class="rights-row" [class.rights-action]="node.type === 'ACTION'">
+                <button
+                  *ngIf="node.children.length > 0"
+                  type="button"
+                  class="rights-expand"
+                  [attr.aria-expanded]="node.expanded"
+                  [attr.aria-label]="(node.expanded ? 'Replier ' : 'Déplier ') + node.label"
+                  (click)="basculerDeveloppement(node)">
+                  <nb-icon [icon]="node.expanded ? 'minus-outline' : 'plus-outline'"></nb-icon>
+                </button>
+                <span *ngIf="node.children.length === 0" class="rights-expand-spacer"></span>
+                <input
+                  type="checkbox"
+                  [checked]="node.checked"
+                  [indeterminate]="node.indeterminate"
+                  [attr.aria-label]="'Autoriser ' + node.label"
+                  (change)="basculerDroit(node, $any($event.target).checked)">
+                <span>{{ node.label }}</span>
+              </div>
+              <ng-container *ngIf="node.expanded && node.children.length > 0">
+                <ng-container
+                  *ngTemplateOutlet="accessNodes; context: { $implicit: node.children }">
+                </ng-container>
+              </ng-container>
+            </li>
+          </ul>
+        </ng-template>
+
+
+        <!-- ACTIONS -->
+
+        <div class="form-actions">
+
+          <button
+            type="submit"
+            class="btn-save"
+            [disabled]="enregistrement || chargementDroits || !catalogueDroitsCharge || (modeEdition && !droitsUtilisateurCharges)">
+
+            <nb-icon
+              [icon]="
+                modeEdition
+                  ? 'save-outline'
+                  : 'person-add-outline'
+              ">
+            </nb-icon>
+
+            {{
+              enregistrement
+                ? 'Enregistrement...'
+                : modeEdition
+                  ? 'Modifier'
+                  : 'Créer l’utilisateur'
+            }}
+
+          </button>
+
+
+          <button
+            type="button"
+            class="btn-cancel"
+            (click)="reinitialiserFormulaire()">
+
+            <nb-icon icon="close-outline"></nb-icon>
+
+            Fermer
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </section>
+
+    <!-- LISTE -->
+
+    <section class="list-card">
+
+      <div class="card-header">
+
+        <div class="card-icon">
+
+          <nb-icon icon="people-outline"></nb-icon>
+
+        </div>
+
+        <div>
+
+          <h2>Utilisateurs</h2>
+
+          <p>
+            {{ utilisateurs.length }}
+            utilisateur(s) enregistré(s)
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- CHARGEMENT -->
+
+      <div
+        class="loading"
+        *ngIf="chargement">
+
+        <nb-icon icon="loader-outline"></nb-icon>
+
+        Chargement des utilisateurs...
+
+      </div>
+
+
+      <!-- LISTE -->
+
+      <div
+        class="users-list"
+        *ngIf="!chargement">
+
+
+        <div
+          class="user-row"
+          *ngFor="let utilisateur of utilisateurs">
+
+
+          <!-- AVATAR -->
+
+          <div class="user-avatar">
+
+            {{ utilisateur.prenom?.charAt(0) }}
+            {{ utilisateur.nom?.charAt(0) }}
+
+          </div>
+
+
+          <!-- INFORMATIONS -->
+
+          <div class="user-info">
+
+            <strong>
+
+              {{ utilisateur.nom }}
+              {{ utilisateur.prenom }}
+
+            </strong>
+
+            <span>
+
+              {{ utilisateur.fonction || 'Fonction non définie' }}
+
+            </span>
+
+            <small>
+
+              {{ utilisateur.email }}
+
+            </small>
+
+          </div>
+
+
+          <!-- STATUT -->
+
+          <div class="user-status">
+
+            <span
+              class="status"
+              [class.active]="utilisateur.actif"
+              [class.inactive]="!utilisateur.actif">
+
+              {{ utilisateur.actif ? 'Actif' : 'Inactif' }}
+
+            </span>
+
+          </div>
+
+
+          <!-- ACTIONS -->
+
+          <div class="user-actions">
+
+            <button
+              type="button"
+              title="Modifier les informations"
+              *ngIf="peutGererDroits"
+              (click)="modifierUtilisateur(utilisateur)">
+
+              <nb-icon icon="edit-outline"></nb-icon>
+
+            </button>
+
+
+            <button
+              type="button"
+              title="Supprimer"
+              class="delete"
+              *ngIf="peutGererDroits"
+              (click)="supprimerUtilisateur(utilisateur)">
+
+              <nb-icon icon="trash-2-outline"></nb-icon>
+
+            </button>
+
+            <button
+              type="button"
+              title="Gérer les droits d’accès"
+              aria-label="Gérer les droits d’accès"
+              *ngIf="peutGererDroits"
+              (click)="modifierDroits(utilisateur)">
+
+              <nb-icon icon="plus-outline"></nb-icon>
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- AUCUN UTILISATEUR -->
+
+        <div
+          class="empty-state"
+          *ngIf="utilisateurs.length === 0">
+
+          <nb-icon icon="people-outline"></nb-icon>
+
+          <h3>Aucun utilisateur</h3>
+
+          <p>
+            Aucun utilisateur n’est encore enregistré.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+</div>

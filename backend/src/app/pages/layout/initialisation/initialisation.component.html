@@ -1,0 +1,610 @@
+<div class="courrier-page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+
+    <div class="header-content">
+
+      <div class="breadcrumb">
+        <span>Nouveau courrier ou document</span>
+      </div>
+
+      <h1>Enregistrer un courrier</h1>
+
+      <p>
+        Enregistrez un nouveau courrier ou document reçu par le secrétariat.
+      </p>
+
+    </div>
+
+<!-- Bouton retour -->
+    <button
+      type="button"
+      class="btn-back"
+      (click)="retour()">
+
+      <nb-icon icon="arrow-back-outline"></nb-icon>
+      Retour
+
+    </button>
+
+
+  </div>
+
+
+  <!-- FORMULAIRE -->
+  <form
+    class="courrier-form"
+    [formGroup]="courrierForm"
+    (ngSubmit)="enregistrerCourrier()">
+
+
+    <!-- INFORMATIONS GENERALES -->
+    <section class="form-card">
+
+      <div class="card-header">
+
+        <div class="card-icon">
+          <nb-icon icon="file-text-outline"></nb-icon>
+        </div>
+
+        <div>
+          <h2>Informations du courrier</h2>
+
+          <p>
+            Renseignez les informations principales du document.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="form-grid">
+
+
+        <!-- TYPE -->
+        <div class="form-group">
+
+          <label>
+            Type de document
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+
+            <nb-icon icon="file-add-outline"></nb-icon>
+
+            <select formControlName="typeDocument">
+
+              <option value="">
+                Sélectionner le type
+              </option>
+
+              <option value="COURRIER">
+                Courrier
+              </option>
+
+              <option value="NOTE">
+                Note
+              </option>
+
+              <option value="DEMANDE">
+                Demande
+              </option>
+
+              <option value="FACTURE">
+                Facture
+              </option>
+
+              <option value="RAPPORT">
+                Rapport
+              </option>
+
+              <option value="AUTRE">
+                Autre
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <!-- DATE -->
+        <div class="form-group">
+
+          <label>
+            Date de réception
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+
+            <nb-icon icon="calendar-outline"></nb-icon>
+
+            <input
+              type="date"
+              formControlName="dateReception">
+
+          </div>
+
+        </div>
+
+
+        <!-- EXPEDITEUR -->
+        <div class="form-group">
+
+          <label>
+            Expéditeur
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+
+            <nb-icon icon="person-outline"></nb-icon>
+
+            <input
+              type="text"
+              formControlName="expediteur"
+              placeholder="Nom de l'expéditeur">
+
+          </div>
+
+        </div>
+
+        <!-- DESTINATION -->
+        <div class="form-group">
+
+          <label>
+            Destinataire
+            <span>*</span>
+          </label>
+
+          <div class="destinataire-container">
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="person-done-outline"></nb-icon>
+
+              <input
+                type="text"
+                [value]="rechercheDestinataire"
+                placeholder="Rechercher un destinataire..."
+                (input)="rechercheDestinataire = $any($event.target).value; rechercherDestinataire()"
+                (focus)="ouvrirListeDestinataires()"
+                (blur)="fermerListeDestinataires()">
+
+              <nb-icon
+                icon="chevron-down-outline"
+                class="dropdown-icon">
+              </nb-icon>
+
+            </div>
+
+            <!-- LISTE -->
+            <div
+              class="destinataire-dropdown"
+              *ngIf="listeDestinatairesOuverte">
+
+              <!-- BARRE DE TRI -->
+              <div class="destinataire-toolbar">
+
+                <span>
+                  {{ utilisateursFiltres.length }}
+                  utilisateur(s)
+                </span>
+
+                <select
+                  [(ngModel)]="triDestinataire"
+                  [ngModelOptions]="{standalone: true}"
+                  (change)="changerTriDestinataire()">
+
+                  <option value="nom">
+                    Trier par nom
+                  </option>
+
+                  <option value="prenom">
+                    Trier par prénom
+                  </option>
+
+                  <option value="fonction">
+                    Trier par fonction
+                  </option>
+
+                  <option value="service">
+                    Trier par service
+                  </option>
+
+                </select>
+
+              </div>
+
+              <!-- UTILISATEURS -->
+              <div
+                class="destinataire-list"
+                *ngIf="utilisateursFiltres.length > 0">
+
+                <div
+                  class="destinataire-item"
+                  *ngFor="let utilisateur of utilisateursFiltres"
+                  (mousedown)="selectionnerDestinataire(utilisateur)">
+
+                  <div class="destinataire-avatar">
+
+                    <nb-icon icon="person-outline"></nb-icon>
+
+                  </div>
+
+                  <div class="destinataire-info">
+
+                    <strong>
+                      {{ utilisateur.nom }}
+                      {{ utilisateur.prenom }}
+                    </strong>
+
+                    <span>
+                      {{ utilisateur.fonction || 'Fonction non renseignée' }}
+                    </span>
+
+                    <small
+                      *ngIf="utilisateur.service">
+
+                      {{ utilisateur.service }}
+
+                    </small>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- AUCUN RESULTAT -->
+              <div
+                class="destinataire-empty"
+                *ngIf="utilisateursFiltres.length === 0">
+
+                <nb-icon icon="search-outline"></nb-icon>
+
+                <span>
+                  Aucun utilisateur trouvé
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- REFERENCE -->
+        <div class="form-group">
+
+          <label>
+            Référence du dossier
+          </label>
+
+          <div class="input-wrapper">
+
+            <nb-icon icon="folder-remove-outline"></nb-icon>
+
+            <input
+              type="text"
+              formControlName="reference"
+              readonly>
+
+          </div>
+
+        </div>
+
+
+        <!-- OBJET -->
+        <div class="form-group">
+
+          <label>
+            Objet du courrier
+            <span>*</span>
+          </label>
+
+          <div class="input-wrapper">
+
+            <nb-icon icon="file-text-outline"></nb-icon>
+
+            <input
+              type="text"
+              formControlName="objet"
+              placeholder="Objet du courrier">
+
+          </div>
+
+        </div>
+
+
+        <!-- DESCRIPTION -->
+        <div class="form-group full-width">
+
+          <label>
+            Description / Observation
+          </label>
+
+          <textarea
+            formControlName="description"
+            rows="4"
+            placeholder="Ajoutez éventuellement une description ou une observation...">
+          </textarea>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ORIGINE DU DOCUMENT -->
+    <section class="form-card">
+
+      <div class="card-header">
+
+        <div class="card-icon">
+          <nb-icon icon="code-outline"></nb-icon>
+        </div>
+
+        <div>
+
+          <h2>Origine du document</h2>
+
+          <p>
+            Indiquez comment le courrier a été reçu.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="origine-grid">
+
+
+        <!-- ORDINATEUR -->
+        <label
+          class="origine-card"
+          [class.active]="origine === 'UPLOAD'">
+
+          <input
+            type="radio"
+            name="origine"
+            value="UPLOAD"
+            (change)="changerOrigine('UPLOAD')">
+
+          <div class="origine-icon">
+            <nb-icon icon="file-add-outline"></nb-icon>
+          </div>
+
+          <div>
+
+            <h3>Depuis l'ordinateur</h3>
+
+            <p>
+              Importer un document PDF, Word ou une image.
+            </p>
+
+          </div>
+
+        </label>
+
+
+        <!-- SCAN -->
+        <label
+          class="origine-card"
+          [class.active]="origine === 'SCAN'">
+
+          <input
+            type="radio"
+            name="origine"
+            value="SCAN"
+            (change)="changerOrigine('SCAN')">
+
+          <div class="origine-icon">
+            <nb-icon icon="camera-outline"></nb-icon>
+          </div>
+
+          <div>
+
+            <h3>Document scanné</h3>
+
+            <p>
+              Ajouter un document provenant d'un scanner.
+            </p>
+
+          </div>
+
+        </label>
+
+
+        <!-- EMAIL -->
+        <label
+          class="origine-card"
+          [class.active]="origine === 'EMAIL'">
+
+          <input
+            type="radio"
+            name="origine"
+            value="EMAIL"
+            (change)="changerOrigine('EMAIL')">
+
+          <div class="origine-icon">
+            <nb-icon icon="email-outline"></nb-icon>
+          </div>
+
+          <div>
+
+            <h3>Courrier électronique</h3>
+
+            <p>
+              Document reçu par email.
+            </p>
+
+          </div>
+
+        </label>
+
+      </div>
+
+
+      <!-- UPLOAD -->
+      <ng-container *ngIf="origine === 'UPLOAD' || origine === 'SCAN'">
+        <div class="upload-zone" *appCanAccess="'pages.archiving.initialization.create'">
+
+        <input
+          type="file"
+          #fileInput
+          hidden
+          (change)="selectionnerFichier($event)"
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+
+        <div
+          class="upload-content"
+          (click)="fileInput.click()">
+
+          <div class="upload-icon">
+            <nb-icon icon="cloud-upload-outline"></nb-icon>
+          </div>
+
+          <h3>
+            Sélectionner le document
+          </h3>
+
+          <p>
+            Cliquez ici pour sélectionner le fichier
+          </p>
+
+          <small>
+            PDF, DOC, DOCX, JPG ou PNG
+          </small>
+
+        </div>
+
+        </div>
+      </ng-container>
+
+
+      <!-- FICHIER SELECTIONNE -->
+      <div
+        class="file-selected"
+        *ngIf="fichier">
+
+        <div class="file-icon">
+
+          <nb-icon icon="file-text-outline"></nb-icon>
+
+        </div>
+
+        <div class="file-info">
+
+          <strong>
+            {{ fichier.name }}
+          </strong>
+
+          <span>
+            {{ formatTaille(fichier.size) }}
+          </span>
+
+        </div>
+
+        <button
+          type="button"
+          *appCanAccess="'pages.archiving.initialization.create'"
+          (click)="supprimerFichier()">
+
+          <nb-icon icon="trash-2-outline"></nb-icon>
+
+        </button>
+
+      </div>
+
+
+      <!-- EMAIL -->
+      <div
+        class="email-info"
+        *ngIf="origine === 'EMAIL'">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+
+            <label>
+              Adresse email de l'expéditeur
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="email-outline"></nb-icon>
+
+              <input
+                type="email"
+                formControlName="emailExpediteur"
+                placeholder="expediteur@example.com">
+
+            </div>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              Date de réception de l'email
+            </label>
+
+            <div class="input-wrapper">
+
+              <nb-icon icon="calendar-outline"></nb-icon>
+
+              <input
+                type="datetime-local"
+                formControlName="dateEmail">
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ACTIONS -->
+
+      <div class="form-actions">
+
+        <button
+          type="submit"
+          *appCanAccess="'pages.archiving.initialization.submit'"
+          class="btn-cancel">
+
+          <nb-icon icon="save-outline"></nb-icon>
+          Enregistrer
+
+        </button>
+
+        <button
+          type="button"
+          *appCanAccess="'pages.archiving.initialization.create'"
+          class="btn-cancel"
+          (click)="reinitialiserFormulaire()">
+
+          <nb-icon icon="close-outline"></nb-icon>
+          Annuler
+
+        </button>
+
+      </div>
+
+  </form>
+
+</div>

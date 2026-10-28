@@ -1,0 +1,299 @@
+<div class="autorise-rapport-page">
+  <div class="page-header">
+    <div class="breadcrumb">Utilisateurs <span>/</span> Autorisation</div>
+    <h1><nb-icon icon="shield-outline"></nb-icon> Gestion des autorisations</h1>
+    <p>Cliquez sur une personne pour voir ses rapports, choisissez uniquement ceux à ouvrir, puis autorisez une ou plusieurs personnes.</p>
+  </div>
+
+  <output class="alert alert-success" *ngIf="messageSucces" aria-live="polite">
+    <nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+    {{ messageSucces }}
+    <button class="alert-close" type="button" aria-label="Fermer" (click)="messageSucces = ''">
+      <nb-icon icon="close-outline"></nb-icon>
+    </button>
+  </output>
+  <div class="alert alert-error" *ngIf="messageErreur" role="alert">
+    <nb-icon icon="alert-circle-outline"></nb-icon>
+    {{ messageErreur }}
+    <button class="alert-close" type="button" aria-label="Fermer" (click)="messageErreur = ''">
+      <nb-icon icon="close-outline"></nb-icon>
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="chargement">
+    <nb-icon icon="loader-outline"></nb-icon> Chargement des utilisateurs...
+  </div>
+
+  <div class="content-card" *ngIf="!chargement && !peutGererPartages">
+    <h2>Accès réservé</h2>
+    <p>Seul le Super Admin et les gestionnaires qu’il a désignés peuvent administrer les partages de rapports.</p>
+  </div>
+
+  <ng-container *ngIf="!chargement && peutGererPartages">
+    <div class="mode-selector">
+      <button class="btn-toolbar" type="button" [class.active]="mode === 'gestionnaires'" *ngIf="estSuperAdmin" (click)="choisirMode('gestionnaires')">
+        1. Gestionnaires de partage
+      </button>
+      <button class="btn-toolbar" type="button" [class.active]="mode === 'partageurs'" *ngIf="estSuperAdmin" (click)="choisirMode('partageurs')">
+        2. Autoriser le partage individuel
+      </button>
+      <button class="btn-toolbar" type="button" [class.active]="mode === 'partager'" (click)="choisirMode('partager')">
+        3. Partager des rapports
+      </button>
+      <button class="btn-toolbar" type="button" [class.active]="mode === 'retirer'" (click)="choisirMode('retirer')">
+        4. Retirer des droits
+      </button>
+    </div>
+
+    <section class="content-card" *ngIf="mode === 'gestionnaires' && estSuperAdmin">
+      <div class="card-header">
+        <div class="card-icon"><nb-icon icon="people-outline"></nb-icon></div>
+        <div>
+          <h2>Gestionnaires de partage</h2>
+          <p>Les utilisateurs cochés pourront partager les rapports de n’importe quel propriétaire.</p>
+        </div>
+      </div>
+
+      <div class="users-grid">
+        <label class="user-card" *ngFor="let utilisateur of utilisateurs">
+          <input
+            type="checkbox"
+            [checked]="utilisateur.id != null && nouveauxGestionnaires.has(utilisateur.id)"
+            [disabled]="utilisateur.superAdmin === true || utilisateur.actif === false"
+            (change)="toggleGestionnaire(utilisateur.id!)">
+          <span class="user-card-info">
+            <strong>{{ utilisateur.prenom }} {{ utilisateur.nom }}</strong>
+            <span>{{ utilisateur.superAdmin ? 'Super Admin' : (utilisateur.actif ? 'Utilisateur actif' : 'Compte désactivé') }}</span>
+            <small>{{ utilisateur.email }}</small>
+          </span>
+        </label>
+      </div>
+      <div class="action-bar">
+        <button class="btn-save" type="button" (click)="enregistrerGestionnaires()" [disabled]="enregistrement">
+          {{ enregistrement ? 'Enregistrement...' : 'Enregistrer les gestionnaires' }}
+        </button>
+      </div>
+
+      <hr>
+      <h3>Transférer le rôle Super Admin</h3>
+      <p>Le transfert retire immédiatement ce rôle au compte actuel et le donne au compte choisi.</p>
+      <div class="toolbar">
+        <select [(ngModel)]="superAdminIdSelectionne" aria-label="Nouvel utilisateur Super Admin">
+          <option [ngValue]="null">Choisir le nouvel administrateur</option>
+          <option *ngFor="let utilisateur of utilisateursSuperAdminPossibles" [ngValue]="utilisateur.id">
+            {{ utilisateur.prenom }} {{ utilisateur.nom }} — {{ utilisateur.email }}
+          </option>
+        </select>
+        <button class="btn-save" type="button" (click)="transfererSuperAdmin()" [disabled]="enregistrement || !superAdminIdSelectionne">
+          Transférer le rôle
+        </button>
+      </div>
+    </section>
+
+    <section class="content-card" *ngIf="mode === 'partageurs' && estSuperAdmin">
+      <div class="card-header">
+        <div class="card-icon"><nb-icon icon="share-outline"></nb-icon></div>
+        <div>
+          <h2>Utilisateurs autorisés à partager leurs rapports</h2>
+          <p>Seuls les utilisateurs actifs cochés verront l’option de partage dans leur liste de rapports.</p>
+        </div>
+      </div>
+      <div class="users-grid">
+        <label class="user-card" *ngFor="let utilisateur of utilisateurs">
+          <input
+            type="checkbox"
+            [checked]="utilisateur.id != null && nouveauxPartageurs.has(utilisateur.id)"
+            [disabled]="utilisateur.actif === false"
+            (change)="togglePartageur(utilisateur.id!)">
+          <span class="user-card-info">
+            <strong>{{ utilisateur.prenom }} {{ utilisateur.nom }}</strong>
+            <span>{{ utilisateur.actif ? 'Utilisateur actif' : 'Compte désactivé' }}</span>
+            <small>{{ utilisateur.email }}</small>
+          </span>
+        </label>
+      </div>
+      <div class="action-bar">
+        <button class="btn-save" type="button" (click)="enregistrerPartageurs()" [disabled]="enregistrement">
+          {{ enregistrement ? 'Enregistrement...' : 'Enregistrer les autorisations' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="content-card" *ngIf="mode === 'partager'">
+      <div class="card-header">
+        <div class="card-icon"><nb-icon icon="share-outline"></nb-icon></div>
+        <div>
+          <h2>Accès ciblé aux rapports</h2>
+          <p>
+            Cliquez sur une personne pour afficher uniquement ses rapports, puis cochez ceux à ouvrir.
+            Cliquez sur une autre personne pour ses rapports. L’accès n’est jamais donné à tous ses documents.
+          </p>
+        </div>
+      </div>
+
+      <div class="share-layout">
+        <div class="share-column">
+          <h3>1. Personne propriétaire</h3>
+          <div class="search-input">
+            <nb-icon icon="search-outline"></nb-icon>
+            <input type="search" [(ngModel)]="rechercheProprietaire" placeholder="Rechercher une personne">
+          </div>
+          <div class="users-stack">
+            <button
+              class="user-card"
+              type="button"
+              *ngFor="let utilisateur of proprietairesFiltres"
+              [class.selected]="utilisateur.id === proprietaireIdSelectionne"
+              (click)="selectionnerProprietaire(utilisateur)">
+              <span class="user-card-avatar">{{ initiales(utilisateur) }}</span>
+              <span class="user-card-info">
+                <strong>{{ utilisateur.prenom }} {{ utilisateur.nom }}</strong>
+                <small>{{ utilisateur.email }}</small>
+              </span>
+              <span class="recipient-count" *ngIf="nombreRapportsCoches(utilisateur.id) > 0">
+                {{ nombreRapportsCoches(utilisateur.id) }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="share-column">
+          <h3>2. Rapports à partager</h3>
+          <ng-container *ngIf="proprietaireActif; else aucunProprietaire">
+            <div class="selected-user-banner">
+              <div class="selected-user-info">
+                <span class="selected-user-avatar">{{ initiales(proprietaireActif) }}</span>
+                <div>
+                  <strong>{{ proprietaireActif.prenom }} {{ proprietaireActif.nom }}</strong>
+                  <span>Cochez uniquement les rapports concernés</span>
+                </div>
+              </div>
+            </div>
+            <div class="search-input">
+              <nb-icon icon="search-outline"></nb-icon>
+              <input type="search" [(ngModel)]="rechercheRapport" placeholder="Filtrer les rapports">
+            </div>
+            <div class="loading" *ngIf="chargementRapports">
+              <nb-icon icon="loader-outline"></nb-icon> Chargement des rapports...
+            </div>
+            <div class="rapports-list" *ngIf="!chargementRapports">
+              <label class="rapport-row" *ngFor="let rapport of rapportsFiltres" [class.autorise]="rapport.id != null && isRapportSelectionne(rapport.id)">
+                <span class="rapport-checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="rapport.id != null && isRapportSelectionne(rapport.id)"
+                    [disabled]="rapport.id == null"
+                    (change)="toggleRapport(rapport.id!)">
+                </span>
+                <span class="rapport-info">
+                  <strong>{{ rapport.titre }}</strong>
+                  <span class="rapport-meta">
+                    {{ rapport.dateCreation | date:'dd/MM/yyyy' }}
+                    <ng-container *ngIf="nombrePartagesDuRapport(rapport.id) > 0">
+                      · déjà ouvert à {{ nombrePartagesDuRapport(rapport.id) }} personne(s)
+                    </ng-container>
+                  </span>
+                </span>
+              </label>
+              <div class="empty-state" *ngIf="rapportsFiltres.length === 0">
+                <nb-icon icon="file-text-outline"></nb-icon>
+                <h3>Aucun rapport</h3>
+                <p>Cette personne n’a pas encore de rapport à partager.</p>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #aucunProprietaire>
+            <div class="empty-state">
+              <nb-icon icon="person-outline"></nb-icon>
+              <h3>Choisissez une personne</h3>
+              <p>Ses rapports s’afficheront ici. Un second clic sur une autre personne affiche les siens.</p>
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="share-column">
+          <h3>3. Personnes autorisées</h3>
+          <p class="column-hint">Une ou plusieurs personnes peuvent consulter uniquement les rapports cochés.</p>
+          <div class="search-input">
+            <nb-icon icon="search-outline"></nb-icon>
+            <input type="search" [(ngModel)]="rechercheBeneficiaire" placeholder="Rechercher un bénéficiaire">
+          </div>
+          <div class="users-stack">
+            <label class="user-card" *ngFor="let utilisateur of beneficiairesFiltres">
+              <input
+                type="checkbox"
+                [checked]="utilisateur.id != null && isBeneficiaireSelectionne(utilisateur.id)"
+                (change)="toggleBeneficiaire(utilisateur.id!)">
+              <span class="user-card-avatar">{{ initiales(utilisateur) }}</span>
+              <span class="user-card-info">
+                <strong>{{ utilisateur.prenom }} {{ utilisateur.nom }}</strong>
+                <small>{{ utilisateur.email }}</small>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <div class="action-summary">
+          <nb-icon icon="checkmark-square-2-outline"></nb-icon>
+          <span>
+            <strong>{{ nombreRapportsSelectionnes }}</strong> rapport(s) chez
+            <strong>{{ proprietairesAvecRapportsSelectionnes.length }}</strong> personne(s) →
+            <strong>{{ beneficiairesSelectionnes.size }}</strong> bénéficiaire(s)
+          </span>
+        </div>
+        <button
+          class="btn-save"
+          type="button"
+          (click)="accorderAcces()"
+          [disabled]="enregistrement || nombreRapportsSelectionnes === 0 || beneficiairesSelectionnes.size === 0">
+          {{ enregistrement ? 'Enregistrement...' : 'Accorder l’accès sélectionné' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="content-card" *ngIf="mode === 'retirer'">
+      <div class="card-header">
+        <div class="card-icon"><nb-icon icon="close-circle-outline"></nb-icon></div>
+        <div>
+          <h2>Retirer des droits existants</h2>
+          <p>Cochez chaque accès à retirer. Les autres partages resteront actifs.</p>
+        </div>
+      </div>
+
+      <div class="search-input" style="margin-bottom: 16px;">
+        <nb-icon icon="search-outline"></nb-icon>
+        <input type="search" [(ngModel)]="rechercheRetrait" placeholder="Filtrer par rapport, propriétaire ou bénéficiaire">
+      </div>
+      <div class="rapports-list">
+        <label class="rapport-row" *ngFor="let partage of partagesFiltres">
+          <span class="rapport-checkbox">
+            <input
+              type="checkbox"
+              [checked]="partageEstSelectionnePourRetrait(partage)"
+              [disabled]="partage.rapportId == null"
+              (change)="togglePartageARetirer(partage)">
+          </span>
+          <span class="rapport-info">
+            <strong>{{ partage.rapportTitre || ('Rapport #' + partage.rapportId) }}</strong>
+            <span class="rapport-meta">
+              Propriétaire : {{ formatUtilisateur(partage.proprietaireId) }}
+              · Bénéficiaire : {{ formatUtilisateur(partage.beneficiaireId) }}
+            </span>
+          </span>
+        </label>
+        <div class="empty-state" *ngIf="partagesFiltres.length === 0">
+          <nb-icon icon="file-text-outline"></nb-icon>
+          <h3>Aucun droit de partage enregistré</h3>
+        </div>
+      </div>
+      <div class="action-bar">
+        <span>{{ nombrePartagesSelectionnesPourRetrait }} droit(s) à retirer</span>
+        <button class="btn-save" type="button" (click)="retirerPartagesSelectionnes()" [disabled]="enregistrement || nombrePartagesSelectionnesPourRetrait === 0">
+          {{ enregistrement ? 'Retrait...' : 'Retirer les droits sélectionnés' }}
+        </button>
+      </div>
+    </section>
+  </ng-container>
+</div>

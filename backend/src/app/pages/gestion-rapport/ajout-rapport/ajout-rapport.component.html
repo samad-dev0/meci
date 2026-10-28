@@ -1,0 +1,61 @@
+<nb-card>
+  <nb-card-header>Ajouter un rapport</nb-card-header>
+  <nb-card-body>
+    <div class="alert alert-danger" *ngIf="messageErreur">{{ messageErreur }}</div>
+    <div class="form-group row">
+      <label for="titre" class="label col-sm-3 col-form-label">Titre du rapport</label>
+      <div class="col-sm-9">
+        <input type="text" nbInput fullWidth id="titre" placeholder="Titre du rapport" [(ngModel)]="titre">
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <label for="typeRapport" class="label col-sm-3 col-form-label">Catégorie du rapport *</label>
+      <div class="col-sm-9">
+        <select nbInput fullWidth id="typeRapport" [(ngModel)]="typeRapport" name="typeRapport" required>
+          <option value="">Choisir une catégorie</option>
+          <option value="RAPPORT_ACTIVITE">Rapport d'activité</option>
+          <option value="RAPPORT_FINANCIER">Rapport financier</option>
+          <option value="RAPPORT_TECHNIQUE">Rapport technique</option>
+          <option value="RAPPORT_MISSION">Rapport de mission</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <label class="label col-sm-3 col-form-label">Méthode d'ajout</label>
+      <div class="col-sm-9">
+        <nb-radio-group [(ngModel)]="methodeSaisie" name="methode" class="d-flex">
+          <nb-radio value="import">Importer un document</nb-radio>
+          <nb-radio value="direct">Écrire directement</nb-radio>
+        </nb-radio-group>
+      </div>
+    </div>
+
+    <div class="form-group row" *ngIf="methodeSaisie === 'import'">
+      <label for="fichier" class="label col-sm-3 col-form-label">Document (PDF, Word)</label>
+      <div class="col-sm-9">
+        <input type="file" nbInput fullWidth id="fichier" 
+               *appCanAccess="'pages.reports.create.submit'"
+               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf" 
+               (change)="onFileSelected($event)">
+        <small class="form-text text-muted">Veuillez sélectionner un fichier au format document uniquement.</small>
+      </div>
+    </div>
+
+    <div class="form-group row" *ngIf="methodeSaisie === 'direct'">
+      <label for="contenu" class="label col-sm-3 col-form-label">Contenu du rapport</label>
+      <div class="col-sm-9">
+        <textarea nbInput fullWidth id="contenu" placeholder="Rédigez votre rapport ici..." [(ngModel)]="contenuRapport" rows="10"></textarea>
+      </div>
+    </div>
+  </nb-card-body>
+  <nb-card-footer>
+    <button nbButton status="primary" *appCanAccess="'pages.reports.create.submit'"
+      (click)="soumettreRapport()" [disabled]="chargement">
+      {{ chargement ? 'Enregistrement...' : 'Enregistrer' }}
+    </button>
+    <button nbButton status="basic" class="ml-2" routerLink="/pages/gestion-rapport/liste">Annuler</button>
+  </nb-card-footer>
+</nb-card>

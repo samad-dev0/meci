@@ -1,0 +1,36 @@
+package meci_e_services.entity.enums;
+
+public enum ActionHistorique {
+
+    ENREGISTREMENT,
+
+    RECEPTION_DG,
+
+    AFFECTATION,
+
+    ACCEPTATION_AFFECTATION,
+
+    REFUS_AFFECTATION,
+
+    ACCEPTATION_DELAI,
+
+    REFUS_DELAI,
+
+    MODIFICATION_DELAI,
+
+    DEBUT_TRAITEMENT,
+
+    MISE_A_JOUR_TRAITEMENT,
+
+    RETOUR_DG,
+
+    APPROBATION,
+
+    REJET,
+
+    RETOUR_TRAITEMENT,
+
+    TRANSMISSION_SECRETARIAT,
+
+    CLOTURE
+}

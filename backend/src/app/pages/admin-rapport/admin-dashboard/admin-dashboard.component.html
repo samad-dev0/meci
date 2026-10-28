@@ -1,0 +1,306 @@
+<div class="row">
+  <div class="col-md-12">
+    <nb-card class="shadow-sm">
+      <nb-card-header class="d-flex justify-content-between align-items-center bg-dark text-white">
+        <div>
+          <h4 class="m-0 text-white"><i class="ion-shield mr-2"></i> Panneau d'Administration - Espace Admin Rapport</h4>
+          <small class="text-light">Connecté en tant que : <strong>{{ adminUser }}</strong></small>
+        </div>
+        <button nbButton status="danger" size="small" (click)="deconnexion()">
+          <i class="ion-log-out mr-1"></i> Déconnexion
+        </button>
+      </nb-card-header>
+      <nb-card-body>
+        <!-- Alerts global -->
+        <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="ion-checkmark-circled mr-2"></i> {{ successMessage }}
+        </div>
+        <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="ion-alert-circled mr-2"></i> {{ errorMessage }}
+        </div>
+
+        <!-- Onglets Navigation Admin -->
+        <ul class="nav nav-tabs mb-4">
+          <li class="nav-item">
+            <a class="nav-link cursor-pointer font-weight-bold" [class.active]="activeTab === 'delegation'" (click)="activeTab = 'delegation'">
+              <i class="ion-key mr-1"></i> Gestion des Autorisations (Délégation)
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cursor-pointer" [class.active]="activeTab === 'rapports'" (click)="activeTab = 'rapports'">
+              <i class="ion-document-text mr-1"></i> Validation des Rapports
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link cursor-pointer" [class.active]="activeTab === 'utilisateurs'" (click)="activeTab = 'utilisateurs'">
+              <i class="ion-person-stalker mr-1"></i> Gestion des Utilisateurs
+            </a>
+          </li>
+        </ul>
+
+        <!-- ========================================================================= -->
+        <!-- ONGLET 1 : GESTION DES AUTORISATIONS (DÉLÉGATION D'ACCÈS AUX RAPPORTS)   -->
+        <!-- ========================================================================= -->
+        <div *ngIf="activeTab === 'delegation'" class="delegation-container">
+          <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+              <i class="ion-compose mr-2"></i> Configuration des Droits de Consultation par Délégation
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <!-- COMPOSANT 1 : SÉLECTION DES BÉNÉFICIAIRES (UTILISATEURS AUTORISÉS) -->
+                <div class="col-md-6 border-right">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="font-weight-bold text-primary m-0">
+                      1. Sélection des bénéficiaires (Utilisateurs autorisés)
+                    </h6>
+                    <div>
+                      <button type="button" class="btn btn-link btn-sm p-0 mr-2" (click)="toutSelectionnerBeneficiaires()">
+                        Tout sélectionner
+                      </button>
+                      <button type="button" class="btn btn-link btn-sm p-0 text-muted" (click)="toutDeselectionnerBeneficiaires()">
+                        Tout désélectionner
+                      </button>
+                    </div>
+                  </div>
+                  <p class="small text-muted mb-3">
+                    Cochez le ou les utilisateurs qui recevront le droit de consulter les rapports.
+                  </p>
+
+                  <div class="user-checkbox-list border rounded p-3 bg-light" style="max-height: 250px; overflow-y: auto;">
+                    <div *ngFor="let u of utilisateurs" class="custom-control custom-checkbox mb-2">
+                      <input
+                        type="checkbox"
+                        class="custom-control-input"
+                        [id]="'user-check-' + u.id"
+                        [checked]="isBeneficiaireSelected(u.id!)"
+                        (change)="toggleBeneficiaire(u.id!, $any($event.target).checked)"
+                      />
+                      <label class="custom-control-label cursor-pointer font-weight-normal" [for]="'user-check-' + u.id">
+                        <strong>{{ u.prenom }} {{ u.nom }}</strong> <small class="text-muted">({{ u.email }})</small>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="mt-2 text-right">
+                    <small class="text-primary font-weight-bold">
+                      {{ selectedBeneficiaireIds.length }} bénéficiaire(s) sélectionné(s)
+                    </small>
+                  </div>
+                </div>
+
+                <!-- COMPOSANT 2 & 3 : CHOIX DE LA SOURCE ET ATTRIBUTION DES ACCÈS -->
+                <div class="col-md-6">
+                  <!-- COMPOSANT 2 : CHOIX DE LA SOURCE (PROPRIÉTAIRE DES RAPPORTS) -->
+                  <h6 class="font-weight-bold text-primary mb-2">
+                    2. Choix de la source (Propriétaire des rapports)
+                  </h6>
+                  <p class="small text-muted mb-2">
+                    Sélectionnez l'utilisateur créateur ou propriétaire des rapports.
+                  </p>
+                  <div class="form-group mb-4">
+                    <select
+                      class="form-control font-weight-bold"
+                      [ngModel]="selectedProprietaireId"
+                      (ngModelChange)="onProprietaireChange($event)"
+                    >
+                      <option *ngFor="let prop of utilisateurs" [value]="prop.id">
+                        {{ prop.prenom }} {{ prop.nom }} ({{ prop.service || 'Service Général' }})
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- COMPOSANT 3 : ATTRIBUTION DES ACCÈS (RAPPORTS AUTORISÉS) -->
+                  <h6 class="font-weight-bold text-primary mb-2">
+                    3. Attribution des accès (Rapports autorisés)
+                  </h6>
+
+                  <!-- Option 3a : Sélection globale -->
+                  <div class="card bg-warning-light border-warning mb-3">
+                    <div class="card-body p-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          type="checkbox"
+                          class="custom-control-input"
+                          id="check-tous-les-rapports"
+                          [checked]="tousLesRapportsCoche"
+                          (change)="toggleTousLesRapports($any($event.target).checked)"
+                        />
+                        <label class="custom-control-label font-weight-bold text-dark cursor-pointer" for="check-tous-les-rapports">
+                          <i class="ion-folder mr-1"></i> Tous les rapports du propriétaire
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Option 3b : Sélection au cas par cas -->
+                  <p class="small text-muted mb-2">Ou sélectionnez individuellement certains rapports au cas par cas :</p>
+                  <div class="report-checkbox-list border rounded p-3 bg-white" style="max-height: 200px; overflow-y: auto;">
+                    <div *ngIf="rapportsDuProprietaire.length === 0" class="text-muted small italic">
+                      Aucun rapport enregistré pour ce propriétaire.
+                    </div>
+                    <div *ngFor="let r of rapportsDuProprietaire" class="custom-control custom-checkbox mb-2">
+                      <input
+                        type="checkbox"
+                        class="custom-control-input"
+                        [id]="'rapport-check-' + r.id"
+                        [checked]="isRapportSelected(r.id!)"
+                        (change)="toggleRapport(r.id!, $any($event.target).checked)"
+                      />
+                      <label class="custom-control-label cursor-pointer font-weight-normal" [for]="'rapport-check-' + r.id">
+                        <strong>{{ r.titre }}</strong>
+                        <span class="badge badge-light border ml-1">{{ r.typeRapport }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-4" />
+
+              <!-- COMPOSANT 4 : BOUTON DE VALIDATION ET NOTE SUR LES RÈGLES DE GESTION -->
+              <div class="text-center">
+                <button
+                  type="button"
+                  nbButton
+                  status="success"
+                  size="large"
+                  class="px-5 shadow-sm mb-3"
+                  (click)="enregistrerDelegation()"
+                >
+                  <i class="ion-checkmark-circled mr-2"></i> Enregistrer les autorisations
+                </button>
+
+                <!-- RÈGLES DE GESTION ET AVERTISSEMENTS EXPLICITES -->
+                <div class="alert alert-warning text-left shadow-sm border-warning">
+                  <h6 class="alert-heading font-weight-bold">
+                    <i class="ion-alert-circled mr-1"></i> Règles de gestion et avertissements :
+                  </h6>
+                  <ul class="mb-0 pl-3">
+                    <li class="mb-2">
+                      <strong>Écrasement des droits :</strong> Toute nouvelle validation remplace intégralement les autorisations déjà existantes pour le couple (Utilisateur autorisé, Propriétaire des rapports). Les anciennes règles pour cette combinaison sont supprimées et remplacées par la nouvelle configuration.
+                    </li>
+                    <li>
+                      <strong>Révocation d'accès :</strong> Si l'on enregistre alors qu'aucun rapport n'est coché (ni sélection individuelle, ni « Tous les rapports »), alors tous les accès précédemment accordés à cet utilisateur pour ce propriétaire sont immédiatement supprimés. Cela équivaut à une révocation totale des droits.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- ONGLET 2 : SUPERVISION ET VALIDATION DES RAPPORTS                        -->
+        <!-- ========================================================================= -->
+        <div *ngIf="activeTab === 'rapports'">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="m-0">Rapports de tous les utilisateurs — supervision et statuts</h5>
+            <button nbButton status="info" size="small" (click)="chargerRapports()">
+              <i class="ion-refresh mr-1"></i> Rafraîchir
+            </button>
+          </div>
+
+          <div *ngIf="loadingRapports" class="text-center py-4">
+            Chargement des rapports...
+          </div>
+          <div *ngIf="!loadingRapports && rapports.length === 0" class="alert alert-info">
+            Aucun rapport n’est disponible.
+          </div>
+
+          <div class="table-responsive" *ngIf="!loadingRapports && rapports.length > 0">
+            <table class="table table-bordered table-hover">
+              <thead class="thead-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Titre</th>
+                  <th>Auteur / Propriétaire</th>
+                  <th>Date Création</th>
+                  <th>Statut Actuel</th>
+                  <th>Actions Administrateur</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of rapports">
+                  <td>#{{ r.id }}</td>
+                  <td><strong>{{ r.titre }}</strong></td>
+                  <td>
+                    <strong>{{ nomAuteur(r) }}</strong>
+                    <br />
+                    <small class="text-muted">{{ r.auteurEmail }}</small>
+                  </td>
+                  <td>{{ r.dateCreation | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-success': r.statut === 'VALIDE',
+                      'badge-warning': r.statut === 'EN_ATTENTE',
+                      'badge-info': r.statut === 'EN_COURS_VALIDATION',
+                      'badge-danger': r.statut === 'REJETE'
+                    }">
+                      {{ r.statut === 'VALIDE' ? 'Validé' : (r.statut === 'EN_ATTENTE' ? 'En attente' : r.statut) }}
+                    </span>
+                  </td>
+                  <td>
+                    <button nbButton status="success" size="tiny" class="mr-1" (click)="changerStatut(r, 'VALIDE')">
+                      Valider
+                    </button>
+                    <button nbButton status="warning" size="tiny" class="mr-1" (click)="changerStatut(r, 'EN_ATTENTE')">
+                      En attente
+                    </button>
+                    <button nbButton status="danger" size="tiny" class="mr-1" (click)="changerStatut(r, 'REJETE')">
+                      Rejeter
+                    </button>
+                    <button nbButton status="basic" size="tiny" (click)="supprimerRapport(r.id!)">
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- ONGLET 3 : GESTION DES UTILISATEURS DU SYSTÈME                          -->
+        <!-- ========================================================================= -->
+        <div *ngIf="activeTab === 'utilisateurs'">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="m-0">Liste des Utilisateurs & Droits de Suppression</h5>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead class="thead-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Nom & Prénom</th>
+                  <th>Email</th>
+                  <th>Service</th>
+                  <th>Statut</th>
+                  <th>Action Administrateur</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let u of utilisateurs">
+                  <td>#{{ u.id }}</td>
+                  <td><strong>{{ u.prenom }} {{ u.nom }}</strong></td>
+                  <td>{{ u.email }}</td>
+                  <td>{{ u.service || 'Général' }}</td>
+                  <td>
+                    <span class="badge badge-success" *ngIf="u.actif !== false">Actif</span>
+                    <span class="badge badge-secondary" *ngIf="u.actif === false">Inactif</span>
+                  </td>
+                  <td>
+                    <button nbButton status="danger" size="tiny" (click)="supprimerUtilisateur(u.id!)">
+                      <i class="ion-trash-a mr-1"></i> Supprimer l'utilisateur
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>

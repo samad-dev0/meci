@@ -1,0 +1,147 @@
+<div class="row">
+  <div class="col-md-12">
+    <nb-card>
+      <nb-card-header class="d-flex justify-content-between align-items-center">
+        <span><i class="ion-document-text mr-2"></i> Gestion des Rapports - Secrétariat</span>
+        <button nbButton status="primary" size="small" routerLink="/pages/rapports/nouveau">
+          <i class="ion-plus mr-1"></i> Ajouter un nouveau rapport
+        </button>
+      </nb-card-header>
+      <nb-card-body>
+        <!-- Alerts -->
+        <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+          {{ errorMessage }}
+        </div>
+        <div *ngIf="successMessage" class="alert alert-success" role="alert">
+          {{ successMessage }}
+        </div>
+
+        <!-- Filtres et Recherche -->
+        <div class="row mb-3 align-items-end">
+          <div class="col-md-4">
+            <label class="label">Rechercher</label>
+            <input
+              type="text"
+              nbInput
+              fullWidth
+              placeholder="Titre, auteur, mots-clés..."
+              [(ngModel)]="recherche"
+              (keyup.enter)="rechercher()"
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="label">Statut</label>
+            <nb-select fullWidth [(ngModel)]="statutFiltre" placeholder="Tous les statuts">
+              <nb-option value="">Tous les statuts</nb-option>
+              <nb-option value="EN_ATTENTE">En attente</nb-option>
+              <nb-option value="EN_COURS_VALIDATION">En cours de validation</nb-option>
+              <nb-option value="VALIDE">Validé</nb-option>
+              <nb-option value="REJETE">Rejeté</nb-option>
+            </nb-select>
+          </div>
+          <div class="col-md-3">
+            <label class="label">Type de rapport</label>
+            <nb-select fullWidth [(ngModel)]="typeFiltre" placeholder="Tous les types">
+              <nb-option value="">Tous les types</nb-option>
+              <nb-option value="RAPPORT_ACTIVITE">Rapport d'activité</nb-option>
+              <nb-option value="RAPPORT_FINANCIER">Rapport financier</nb-option>
+              <nb-option value="RAPPORT_TECHNIQUE">Rapport technique</nb-option>
+              <nb-option value="RAPPORT_MISSION">Rapport de mission</nb-option>
+              <nb-option value="AUTRE">Autre</nb-option>
+            </nb-select>
+          </div>
+          <div class="col-md-2 d-flex">
+            <button nbButton status="info" size="medium" class="mr-2" (click)="rechercher()">
+              Filtrer
+            </button>
+            <button nbButton status="basic" size="medium" (click)="reinitialiser()">
+              RAZ
+            </button>
+          </div>
+        </div>
+
+        <!-- Tableau des Rapports -->
+        <div *ngIf="loading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Chargement...</span>
+          </div>
+        </div>
+
+        <div *ngIf="!loading && rapports.length === 0" class="alert alert-info text-center my-3">
+          Aucun rapport trouvé. Utilisez le bouton ci-dessus pour ajouter un nouveau rapport.
+        </div>
+
+        <div class="table-responsive" *ngIf="!loading && rapports.length > 0">
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Titre</th>
+                <th>Type</th>
+                <th>Auteur</th>
+                <th>Date</th>
+                <th>Statut</th>
+                <th>Vérificateurs</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rapport of rapports">
+                <td>#{{ rapport.id }}</td>
+                <td><strong>{{ rapport.titre }}</strong></td>
+                <td>{{ rapport.typeRapport }}</td>
+                <td>{{ rapport.auteurNom }}</td>
+                <td>{{ rapport.dateCreation | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="'badge-' + getBadgeStatus(rapport.statut)">
+                    {{ getStatutLibelle(rapport.statut) }}
+                  </span>
+                </td>
+                <td>{{ rapport.verificateursAssignes || 'Aucun' }}</td>
+                <td>
+                  <button nbButton status="primary" size="tiny" class="mr-1" (click)="voirDetails(rapport)">
+                    Détails
+                  </button>
+                  <button nbButton status="danger" size="tiny" (click)="supprimer(rapport.id!)">
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<!-- Modal Détails -->
+<div *ngIf="selectedRapport" class="modal-backdrop-custom">
+  <div class="modal-dialog-custom">
+    <nb-card>
+      <nb-card-header class="d-flex justify-content-between align-items-center">
+        <span>Détails du Rapport #{{ selectedRapport.id }}</span>
+        <button nbButton status="basic" size="small" (click)="fermerDetails()">X</button>
+      </nb-card-header>
+      <nb-card-body>
+        <h5>{{ selectedRapport.titre }}</h5>
+        <p><strong>Type :</strong> {{ selectedRapport.typeRapport }}</p>
+        <p><strong>Auteur :</strong> {{ selectedRapport.auteurNom }} ({{ selectedRapport.auteurEmail }})</p>
+        <p><strong>Statut :</strong> {{ getStatutLibelle(selectedRapport.statut) }}</p>
+        <p><strong>Vérificateurs assignés :</strong> {{ selectedRapport.verificateursAssignes || 'Aucun' }}</p>
+        <hr />
+        <h6>Contenu :</h6>
+        <div class="p-3 bg-light rounded text-dark" style="white-space: pre-wrap;">
+          {{ selectedRapport.contenu || 'Aucun contenu textuel.' }}
+        </div>
+        <div *ngIf="selectedRapport.commentaires" class="mt-3">
+          <h6>Commentaires / Remarques :</h6>
+          <p class="text-muted">{{ selectedRapport.commentaires }}</p>
+        </div>
+      </nb-card-body>
+      <nb-card-footer class="text-right">
+        <button nbButton status="basic" (click)="fermerDetails()">Fermer</button>
+      </nb-card-footer>
+    </nb-card>
+  </div>
+</div>

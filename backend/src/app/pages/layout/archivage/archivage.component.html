@@ -1,0 +1,192 @@
+<div class="archivage-page">
+  <header class="page-header">
+    <div>
+      <div class="eyebrow">Archivage & gestion documentaire</div>
+      <h1>Module de suivi et traitement des dossiers</h1>
+    </div>
+
+    <div class="header-actions">
+      <button nbButton status="primary" appearance="outline" class="action-btn secondary-action">
+        <nb-icon icon="download-outline"></nb-icon>
+        Exporter
+      </button>
+      <button nbButton status="primary" class="action-btn primary-action">
+        <nb-icon icon="plus-outline"></nb-icon>
+        Nouveau dossier
+      </button>
+    </div>
+  </header>
+
+  <section class="stats-grid">
+    <div class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-meta">
+        <span>{{ stat.label }}</span>
+        <span class="dot" [style.background]="stat.color"></span>
+      </div>
+      <div class="stat-value">{{ stat.value }}</div>
+      <div class="stat-bar">
+        <div [style.width.%]="stat.value > 0 ? Math.min((stat.value / 10) * 100, 100) : 0" [style.background]="stat.color"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="board-grid">
+    <div class="panel panel-large">
+      <div class="panel-header">
+        <div>
+          <div class="sub-title">Flux de traitement</div>
+          <h2>Cycle de validation des dossiers</h2>
+        </div>
+        <nb-select [selected]="statusFilter" (selectedChange)="setWindowFilter($event)" status="primary">
+          <nb-option value="Tous">Tous</nb-option>
+          <nb-option value="Reçu">Reçu</nb-option>
+          <nb-option value="Transmis au DG">Transmis au DG</nb-option>
+          <nb-option value="En traitement">En traitement</nb-option>
+          <nb-option value="Soumis au DG">Soumis au DG</nb-option>
+          <nb-option value="Réponse en attente">Réponse en attente</nb-option>
+          <nb-option value="Traité">Traité</nb-option>
+        </nb-select>
+      </div>
+
+      <div class="timeline-wrapper">
+        <div class="timeline-item" *ngFor="let dossier of filteredDossiers; let i = index" (click)="selectDossier(dossier)" [class.active]="selectedDossier.id === dossier.id">
+          <div class="timeline-badge" [ngClass]="getStatusColor(dossier.statut)"></div>
+          <div class="timeline-content">
+            <div class="row-head">
+              <strong>{{ dossier.id }}</strong>
+              <span class="priority" [ngClass]="getPriorityClass(dossier.priorite)">{{ dossier.priorite }}</span>
+            </div>
+            <p>{{ dossier.objet }}</p>
+            <div class="meta-row">
+              <span><nb-icon icon="calendar-outline"></nb-icon>{{ dossier.dateReception }}</span>
+              <span><nb-icon icon="person-outline"></nb-icon>{{ dossier.responsable }}</span>
+              <span><nb-icon icon="folder-outline"></nb-icon>{{ dossier.service }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel panel-side">
+      <div class="panel-header compact">
+        <div>
+          <div class="sub-title">Dossier sélectionné</div>
+          <h2>{{ selectedDossier.id }}</h2>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-header">
+          <div>
+            <div class="label">Objet</div>
+            <h3>{{ selectedDossier.objet }}</h3>
+          </div>
+          <span class="status-badge" [ngClass]="getStatusColor(selectedDossier.statut)">
+            {{ selectedDossier.statut }}
+          </span>
+        </div>
+
+        <div class="detail-grid">
+          <div>
+            <span class="label">Expéditeur</span>
+            <strong>{{ selectedDossier.expediteur }}</strong>
+          </div>
+          <div>
+            <span class="label">Origine</span>
+            <strong>{{ selectedDossier.origine }}</strong>
+          </div>
+          <div>
+            <span class="label">Responsable</span>
+            <strong>{{ selectedDossier.responsable }}</strong>
+          </div>
+          <div>
+            <span class="label">Délai</span>
+            <strong>{{ selectedDossier.delai }}</strong>
+          </div>
+        </div>
+
+        <div class="process-box">
+          <div class="label">Traitement</div>
+          <p>{{ selectedDossier.traitement }}</p>
+          <div class="progress-block">
+            <div class="progress-label">
+              <span>Progression</span>
+              <strong>{{ selectedDossier.score }}%</strong>
+            </div>
+            <div class="progress-bar">
+              <div [style.width.%]="selectedDossier.score"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="table-panel panel">
+    <div class="panel-header">
+      <div>
+        <div class="sub-title">Suivi des courriers</div>
+        <h2>Tableau de suivi</h2>
+      </div>
+      <button nbButton status="control" appearance="outline" class="filter-btn">
+        <nb-icon icon="funnel-outline"></nb-icon>
+        Filtrer
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Objet</th>
+            <th>Origine</th>
+            <th>Statut</th>
+            <th>Responsable</th>
+            <th>Échéance</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dossier of filteredDossiers">
+            <td>{{ dossier.id }}</td>
+            <td>{{ dossier.objet }}</td>
+            <td>{{ dossier.origine }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusColor(dossier.statut)">{{ dossier.statut }}</span>
+            </td>
+            <td>{{ dossier.responsable }}</td>
+            <td>{{ dossier.delai }}</td>
+            <td>
+              <button nbButton size="small" status="primary" class="table-action-btn" (click)="selectDossier(dossier)">
+                Voir
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="activity-panel panel">
+    <div class="panel-header">
+      <div>
+        <div class="sub-title">Historique</div>
+        <h2>Suivi chronologique</h2>
+      </div>
+    </div>
+
+    <div class="activity-list">
+      <div class="activity-item" *ngFor="let detail of selectedDossier.details">
+        <div class="activity-line" [ngClass]="detail.etat"></div>
+        <div class="activity-content">
+          <div class="activity-top">
+            <strong>{{ detail.label }}</strong>
+            <span>{{ detail.date }}</span>
+          </div>
+          <p>{{ detail.description }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

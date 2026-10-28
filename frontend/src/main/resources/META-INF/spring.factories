@@ -1,0 +1,2 @@
+
+org.springframework.boot.env.EnvironmentPostProcessor=meci_e_services.config.ExternalConfigInitializer

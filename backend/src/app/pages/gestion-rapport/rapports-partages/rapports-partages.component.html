@@ -1,0 +1,62 @@
+<nb-card>
+  <nb-card-header>
+    <nb-icon icon="share-outline"></nb-icon>
+    Rapports partagés avec moi
+  </nb-card-header>
+  <nb-card-body>
+    <div class="alert alert-danger" *ngIf="messageErreur" role="alert">{{ messageErreur }}</div>
+    <div class="text-center py-4" *ngIf="chargement">Chargement des rapports partagés...</div>
+    <div class="alert alert-info text-center" *ngIf="!chargement && !messageErreur && rapports.length === 0">
+      Aucun rapport ne vous a été partagé.
+    </div>
+    <div class="table-responsive" *ngIf="!chargement && rapports.length > 0">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Rapport</th>
+            <th>Auteur</th>
+            <th>Date</th>
+            <th>Accès</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rapport of rapports">
+            <td><strong>{{ rapport.titre }}</strong></td>
+            <td>{{ rapport.auteurNom }}</td>
+            <td>{{ rapport.dateCreation | date:'dd/MM/yyyy' }}</td>
+            <td><span class="badge badge-info">Accessible via autorisation</span></td>
+            <td>
+              <button nbButton status="info" size="tiny" type="button"
+                *appCanAccess="'pages.reports.shared.download'"
+                (click)="telechargerRapport(rapport)">
+                Télécharger
+              </button>
+              <button nbButton status="primary" size="tiny" type="button"
+                *appCanAccess="'pages.reports.shared.view'"
+                (click)="voirRapport(rapport)">
+                Consulter
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </nb-card-body>
+</nb-card>
+
+<nb-card *ngIf="rapportSelectionne">
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <span>{{ rapportSelectionne.titre }}</span>
+    <button nbButton status="basic" size="small" type="button" (click)="fermerRapport()">Fermer</button>
+  </nb-card-header>
+  <nb-card-body>
+    <p><strong>Auteur :</strong> {{ rapportSelectionne.auteurNom }}</p>
+    <p><strong>Type :</strong> {{ rapportSelectionne.typeRapport }}</p>
+    <p><strong>Accès :</strong> Accessible via autorisation</p>
+    <hr>
+    <div class="p-3 bg-light rounded text-dark" style="white-space: pre-wrap;">
+      {{ rapportSelectionne.contenu || 'Aucun contenu textuel.' }}
+    </div>
+  </nb-card-body>
+</nb-card>

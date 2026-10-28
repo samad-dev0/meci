@@ -1,0 +1,130 @@
+<nb-card>
+  <nb-card-header class="d-flex justify-content-between align-items-center">
+    <span>Mes rapports</span>
+    <div class="actions">
+      <ng-container *appCanAccess="'pages.reports.shared.manage'">
+        <button
+          nbButton
+          status="info"
+          type="button"
+          *ngIf="!chargementDroitPartage && peutPartager"
+          (click)="ouvrirPanneauPartage()">
+          <nb-icon icon="share-outline"></nb-icon>
+          {{ panneauPartageOuvert ? 'Fermer le partage' : 'Partager mes rapports' }}
+        </button>
+      </ng-container>
+      <button nbButton status="success" routerLink="/pages/gestion-rapport/ajout"
+        *appCanAccess="'pages.reports.create.submit'">
+        <nb-icon icon="plus-outline"></nb-icon> Ajouter un rapport
+      </button>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    <div class="alert alert-warning" *ngIf="messageErreur" role="alert">{{ messageErreur }}</div>
+    <div class="alert alert-warning" *ngIf="messageErreurPartage" role="alert">{{ messageErreurPartage }}</div>
+    <div class="alert alert-success" *ngIf="messageSuccesPartage" role="status">{{ messageSuccesPartage }}</div>
+
+    <section class="border rounded p-3 mb-4" *ngIf="panneauPartageOuvert">
+      <h2 class="h5">Partager un ou plusieurs rapports</h2>
+      <p>Sélectionnez les rapports puis les utilisateurs qui pourront les consulter.</p>
+      <div *ngIf="chargementPartage" class="text-center py-3">Chargement des utilisateurs et des accès...</div>
+      <div class="row" *ngIf="!chargementPartage">
+        <div class="col-md-6">
+          <h3 class="h6">Rapports à partager</h3>
+          <label class="d-block" *ngFor="let rapport of rapports">
+            <input
+              type="checkbox"
+              [disabled]="rapport.id == null"
+              [checked]="rapport.id != null && rapportsSelectionnesPourPartage.has(rapport.id)"
+              (change)="toggleRapportPourPartage(rapport.id!)">
+            {{ rapport.titre }}
+          </label>
+          <p *ngIf="rapports.length === 0">Vous n’avez pas encore de rapport à partager.</p>
+        </div>
+        <div class="col-md-6">
+          <h3 class="h6">Utilisateurs autorisés</h3>
+          <label class="d-block" *ngFor="let utilisateur of utilisateursActifs">
+            <input
+              type="checkbox"
+              [checked]="utilisateur.id != null && beneficiairesSelectionnes.has(utilisateur.id)"
+              (change)="toggleBeneficiairePourPartage(utilisateur.id!)">
+            {{ utilisateur.prenom }} {{ utilisateur.nom }} — {{ utilisateur.email }}
+          </label>
+          <p *ngIf="utilisateursActifs.length === 0">Aucun autre utilisateur actif n’est disponible.</p>
+        </div>
+      </div>
+      <button
+        nbButton
+        status="primary"
+        type="button"
+        class="mt-3"
+        *appCanAccess="'pages.reports.shared.manage'"
+        (click)="enregistrerPartage()"
+        [disabled]="chargementPartage || enregistrementPartage || rapportsSelectionnesPourPartage.size === 0 || beneficiairesSelectionnes.size === 0">
+        {{ enregistrementPartage ? 'Enregistrement...' : 'Partager la sélection' }}
+      </button>
+
+      <hr>
+      <h3 class="h6">Accès déjà accordés</h3>
+      <div *ngIf="partagesExistants.length === 0" class="text-muted">Aucun partage enregistré.</div>
+      <ul class="list-group" *ngIf="partagesExistants.length > 0">
+        <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let partage of partagesExistants">
+          <span>{{ partage.rapportTitre || ('Rapport #' + partage.rapportId) }} — {{ nomBeneficiaire(partage.beneficiaireId) }}</span>
+          <button nbButton size="tiny" status="danger" type="button"
+            *appCanAccess="'pages.reports.shared.manage'"
+            (click)="retirerPartage(partage)">
+            Retirer l’accès
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <div class="row mb-4 align-items-end">
+      <div class="col-md-4">
+        <label class="label">Filtrer par date :</label>
+        <input nbInput placeholder="Sélectionner une date" [nbDatepicker]="datepicker" [(ngModel)]="dateFiltre">
+        <nb-datepicker #datepicker (dateChange)="filtrerParDate()"></nb-datepicker>
+      </div>
+      <div class="col-md-4">
+        <button nbButton status="info" (click)="reinitialiserFiltre()" class="mt-2">
+          Réinitialiser le filtre
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="chargement" class="text-center py-4">Chargement de vos rapports...</div>
+    <div *ngIf="!chargement && !messageErreur && rapportsFiltres.length === 0" class="alert alert-info text-center">
+      Aucun rapport ne vous appartient{{ dateFiltre ? ' à cette date' : '' }}.
+    </div>
+
+    <table class="table table-bordered table-striped" *ngIf="!chargement && rapportsFiltres.length > 0">
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Date de création</th>
+          <th>Auteur</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let rapport of rapportsFiltres">
+          <td>{{ rapport.titre }}</td>
+          <td>{{ rapport.dateCreation | date:'dd/MM/yyyy' }}</td>
+          <td>{{ rapport.auteurNom }}</td>
+          <td>
+            <button nbButton size="tiny" status="primary" type="button"
+              *appCanAccess="'pages.reports.list.download'"
+              (click)="telechargerRapport(rapport)">
+              <nb-icon icon="download-outline"></nb-icon> Télécharger
+            </button>
+            <button nbButton size="tiny" status="danger"
+              *appCanAccess="'pages.reports.list.delete'"
+              (click)="supprimerRapport(rapport)">
+              <nb-icon icon="trash-2-outline"></nb-icon> Supprimer
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </nb-card-body>
+</nb-card>
